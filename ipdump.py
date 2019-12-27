@@ -28,6 +28,7 @@ import sys
 import socket
 import threading
 import io
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 class Logger:
@@ -194,17 +195,20 @@ class Dumper:
 		Retrieves information about the service running on the given port.
 		This information is read from services.csv
 		"""
-		f:io.TextIOWrapper = open("services.csv")
-		line: str = f.readline()
-		while line != '':
-			if line.count(",") < 11:
-				line += f.readline()
-			else:
-				if line.split(",")[1] == str(port_no):
-					f.close()
-					return line.split(",")
-				line = f.readline()
+
+		if os.path.isfile("services.csv"):
+			f: io.TextIOWrapper = open("services.csv")
+			line: str = f.readline()
+			while line != '':
+				if line.count(",") < 11:
+					line += f.readline()
+				else:
+					if line.split(",")[1] == str(port_no):
+						f.close()
+						return line.split(",")
+					line = f.readline()
 		f.close()
+		
 		return ["Unknown"] * 12
 
 
