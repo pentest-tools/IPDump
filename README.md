@@ -6,6 +6,8 @@ Current features:
 - WHOIS Information
 - Portscanning
 
+I'm open to new features, please feel free to email me: adambruce0108@gmail.com.
+
 ## Usage
 ```
 ./ipdump.py -h
