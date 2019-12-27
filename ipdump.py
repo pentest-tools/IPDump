@@ -107,7 +107,7 @@ class Dumper:
 				self.logger.success("Response from {}:".format(base_url))
 				self.print_dict(response.json())
 			else:
-				self.logger.error("Unable to connect to {} (Reason: {})".format(base_url, response_json["message"]))
+				self.logger.error("Unable to fetch information from {} (Reason: {})".format(base_url, response_json["message"]))
 
 	def get_whois_info(self) -> None:
 		"""
@@ -207,8 +207,8 @@ class Dumper:
 						f.close()
 						return line.split(",")
 					line = f.readline()
-		f.close()
-		
+			f.close()
+
 		return ["Unknown"] * 12
 
 
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 	dumper: Dumper = Dumper(args.host, logger)
 
-	logger.info("WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this sofware." \
+	logger.info("WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software." \
 		" For more information see the LICENSE file included with this software.\n")
 
 	if args.all != None or args.ip_info != None:
