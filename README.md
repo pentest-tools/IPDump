@@ -3,6 +3,7 @@
 
 Current features:
 - Geolocation Information
+- SSL Certificate Fetching
 - WHOIS Information
 - Portscanning
 
@@ -64,6 +65,26 @@ query        : 91.7.125.52
 [+] Report for 91.7.125.52 completed
 
 ```
+
+### Getting SSL Certificates
+```
+./ipdump.py google.com -s
+[+] WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software. For more information see the LICENSE file included with this software.
+
+[+] Certificate: 
+subject             : ((('countryName', 'US'),), (('stateOrProvinceName', 'California'),), (('localityName', 'Mountain View'),), (('organizationName', 'Google LLC'),), (('commonName', '*.google.com'),))
+issuer              : ((('countryName', 'US'),), (('organizationName', 'Google Trust Services'),), (('commonName', 'GTS CA 1O1'),))
+version             : 3
+serialNumber        : C5D40BA32A0CF5570800000000287A46
+notBefore           : Jan  7 15:47:12 2020 GMT
+notAfter            : Mar 31 15:47:12 2020 GMT
+subjectAltName      : (('DNS', '*.google.com'), ('DNS', '*.android.com'), ('DNS', '*.appengine.google.com'), ('DNS', '*.cloud.google.com'), ('DNS', '*.crowdsource.google.com'), ('DNS', '*.g.co'), ('DNS', '*.gcp.gvt2.com'), ('DNS', '*.gcpcdn.gvt1.com'), ('DNS', '*.ggpht.cn'), ('DNS', '*.gkecnapps.cn'), ('DNS', '*.google-analytics.com'), ('DNS', '*.google.ca'), ('DNS', '*.google.cl'), ('DNS', '*.google.co.in'), ('DNS', '*.google.co.jp'), ('DNS', '*.google.co.uk'), ('DNS', '*.google.com.ar'), ('DNS', '*.google.com.au'), ('DNS', '*.google.com.br'), ('DNS', '*.google.com.co'), ('DNS', '*.google.com.mx'), ('DNS', '*.google.com.tr'), ('DNS', '*.google.com.vn'), ('DNS', '*.google.de'), ('DNS', '*.google.es'), ('DNS', '*.google.fr'), ('DNS', '*.google.hu'), ('DNS', '*.google.it'), ('DNS', '*.google.nl'), ('DNS', '*.google.pl'), ('DNS', '*.google.pt'), ('DNS', '*.googleadapis.com'), ('DNS', '*.googleapis.cn'), ('DNS', '*.googlecnapps.cn'), ('DNS', '*.googlecommerce.com'), ('DNS', '*.googlevideo.com'), ('DNS', '*.gstatic.cn'), ('DNS', '*.gstatic.com'), ('DNS', '*.gstaticcnapps.cn'), ('DNS', '*.gvt1.com'), ('DNS', '*.gvt2.com'), ('DNS', '*.metric.gstatic.com'), ('DNS', '*.urchin.com'), ('DNS', '*.url.google.com'), ('DNS', '*.wear.gkecnapps.cn'), ('DNS', '*.youtube-nocookie.com'), ('DNS', '*.youtube.com'), ('DNS', '*.youtubeeducation.com'), ('DNS', '*.youtubekids.com'), ('DNS', '*.yt.be'), ('DNS', '*.ytimg.com'), ('DNS', 'android.clients.google.com'), ('DNS', 'android.com'), ('DNS', 'developer.android.google.cn'), ('DNS', 'developers.android.google.cn'), ('DNS', 'g.co'), ('DNS', 'ggpht.cn'), ('DNS', 'gkecnapps.cn'), ('DNS', 'goo.gl'), ('DNS', 'google-analytics.com'), ('DNS', 'google.com'), ('DNS', 'googlecnapps.cn'), ('DNS', 'googlecommerce.com'), ('DNS', 'source.android.google.cn'), ('DNS', 'urchin.com'), ('DNS', 'www.goo.gl'), ('DNS', 'youtu.be'), ('DNS', 'youtube.com'), ('DNS', 'youtubeeducation.com'), ('DNS', 'youtubekids.com'), ('DNS', 'yt.be'))
+OCSP                : ('http://ocsp.pki.goog/gts1o1',)
+caIssuers           : ('http://pki.goog/gsr2/GTS1O1.crt',)
+crlDistributionPoints: ('http://crl.pki.goog/GTS1O1.crl',)
+[+] Report for google.com completed
+```
+
 
 ### Getting Website WHOIS Information
 ```
