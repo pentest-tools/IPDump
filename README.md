@@ -34,7 +34,7 @@ optional arguments:
 
 ## Examples: 
 
-Getting IP Geolocation Information
+### Getting IP Geolocation Information
 ```
 ./ipdump.py 91.7.125.52 -i 
 [+] WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software. For more information see the LICENSE file included with this software.
@@ -174,7 +174,7 @@ OrgTechRef:    https://rdap.arin.net/registry/entity/GITHU-ARIN
 [+] Report for github.com completed
 ```
 
-### Example: Portscanning a Server
+### Portscanning a Server
 ```
 ./ipdump.py imap.gmail.com -p
 [+] WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software. For more information see the LICENSE file included with this software.
