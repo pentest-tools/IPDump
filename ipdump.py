@@ -26,6 +26,7 @@ import argparse
 import requests
 import sys
 import socket
+import ssl
 import threading
 import io
 import os
@@ -109,6 +110,18 @@ class Dumper:
 			else:
 				self.logger.error("Unable to fetch information from {} (Reason: {})".format(base_url, response_json["message"]))
 
+	def get_ssl_info(self) -> None:
+		"""
+		Retrieve the SSL certificate from the host
+		"""
+		ctx: ssl.SSLContext = ssl.create_default_context()
+		s: ssl.SSLSocket = ctx.wrap_socket(socket.socket(), server_hostname=str(self.target))
+		s.connect((str(self.target), 443))
+		cert: ssl.SSLObject = s.getpeercert()
+		s.close()
+		self.logger.success("Certificate: ")
+		self.print_dict(dict(cert))
+
 	def get_whois_info(self) -> None:
 		"""
 		Retrieve the whois information for the target, and print it to the terminal.
@@ -187,7 +200,7 @@ class Dumper:
 		Prints the given dictionary in key-value pairs
 		"""
 		for k, v in d.items():
-			print("%-13s: %s" % (k, v))
+			print("%-20s: %s" % (k, v))
 
 	@staticmethod
 	def find_service(port_no: int) -> list:
@@ -221,6 +234,7 @@ if __name__ == "__main__":
 	parser.add_argument("-a", "--all", help="Run all tools on the given target", action="count")
 	parser.add_argument("-p", "--port-scan", help="Enable portscanning on the target", action="count")
 	parser.add_argument("-i", "--ip-info", help="Fetch information from api-ip.com (contains geographical info)", action="count")
+	parser.add_argument("-s", "--ssl-cert", help="Retrieves the SSL Certificate of the host", action="count")
 	parser.add_argument("-w", "--whois", help="Fetch whois information from arin.net (contains domain ownership info)", action="count")
 	parser.add_argument("-n", "--workers", help="Number of workers for portscanning", type=int)
 	args = parser.parse_args()
@@ -234,6 +248,8 @@ if __name__ == "__main__":
 
 	if args.all != None or args.ip_info != None:
 		dumper.get_ip_info()
+	if args.all != None or args.ssl_cert != None:
+		dumper.get_ssl_info()
 	if args.all != None or args.whois != None:
 		dumper.get_whois_info()
 	if args.all != None or args.port_scan != None:
