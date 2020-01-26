@@ -12,7 +12,7 @@ I'm open to new features, and will be adding more.
 ## Usage
 ```
 ./ipdump.py -h
-usage: ipdump.py [-h] [-l] [-c] [-a] [-p] [-i] [-w] [-n WORKERS] host
+usage: ipdump.py [-h] [-l] [-c] [-a] [-p] [-i] [-s] [-w] [-n WORKERS] host
 
 positional arguments:
   host                  The hostname/IP Address, URL or Domain of the target
@@ -25,6 +25,7 @@ optional arguments:
   -p, --port-scan       Enable portscanning on the target
   -i, --ip-info         Fetch information from api-ip.com (contains
                         geographical info)
+  -s, --ssl-cert        Retrieves the SSL Certificate of the host
   -w, --whois           Fetch whois information from arin.net (contains domain
                         ownership info)
   -n WORKERS, --workers WORKERS
