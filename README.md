@@ -9,6 +9,8 @@ Current features:
 
 I'm open to new features, and will be adding more.
 
+Oh, and thanks Sector035 for featuring me in your [Week in OSINT](https://medium.com/week-in-osint/week-in-osint-2020-05-47cbcd2a3bc0)!
+
 ## Usage
 ```
 ./ipdump.py -h
