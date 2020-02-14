@@ -14,7 +14,9 @@ Oh, and thanks Sector035 for featuring me in your [Week in OSINT](https://medium
 ## Usage
 ```
 ./ipdump.py -h
-usage: ipdump.py [-h] [-l] [-c] [-a] [-p] [-i] [-s] [-w] [-n WORKERS] host
+usage: ipdump.py [-h] [-l] [-c] [-a] [-p] [-i] [-s] [-w] [-n WORKERS]
+                 [-r RANGE]
+                 host
 
 positional arguments:
   host                  The hostname/IP Address, URL or Domain of the target
@@ -32,6 +34,9 @@ optional arguments:
                         ownership info)
   -n WORKERS, --workers WORKERS
                         Number of workers for portscanning
+  -r RANGE, --range RANGE
+                        Range of ports to scan formatted as START-END
+
 ```
 
 ## Examples: 
@@ -178,19 +183,16 @@ OrgTechRef:    https://rdap.arin.net/registry/entity/GITHU-ARIN
 
 ### Portscanning a Server
 ```
-./ipdump.py imap.gmail.com -p
+./ipdump.py imap.gmail.com -p -r 900-1000
 [+] WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software. For more information see the LICENSE file included with this software.
 
-[+] Portscanning imap.gmail.com for open ports in the range 1-1024
-+-------+------------------------------+-----------+--------------------------------------------------+
-| Port  | Protocol                     | Transport | Description                                      |
-+-------+------------------------------+-----------+--------------------------------------------------+
-| 25    | smtp                         | tcp       | Simple Mail Transfer                             |
-| 465   | urd                          | tcp       | URL Rendezvous Directory for SSM                 |
-| 587   | submission                   | tcp       | Message Submission                               |
-| 993   | imaps                        | tcp       | IMAP over TLS protocol                           |
-| 995   | pop3s                        | tcp       | POP3 over TLS protocol                           |
-+-------+------------------------------+-----------+--------------------------------------------------+
+[+] Portscanning imap.gmail.com for open ports in the range 900-1000
+    +-------+------------------------------+-----------+--------------------------------------------------+
+    | Port  | Protocol                     | Transport | Description                                      |
+    +-------+------------------------------+-----------+--------------------------------------------------+
+    | 993   | imaps                        | tcp       | IMAP over TLS protocol                           |
+    | 995   | pop3s                        | tcp       | POP3 over TLS protocol                           |
+    +-------+------------------------------+-----------+--------------------------------------------------+
 [+] Portscan finished
 [+] Report for imap.gmail.com completed
 ```
