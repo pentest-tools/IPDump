@@ -43,7 +43,7 @@ class Logger:
 	COLOR_INFO: str = "\033[93m"
 
 
-	def __init__(self, enabled: bool = True, color: bool = True):
+	def __init__(self, enabled: bool=True, color: bool=True):
 		"""
 		Creates a new instance
 		"""
@@ -80,19 +80,43 @@ class Logger:
 			else:
 				print("[*] {}".format(msg))
 
+	def no_status(self, msg: str) -> None:
+		"""
+		Logs a message with no status icon
+		"""
+		if self.enabled:
+			print("    " + msg)
+
+class PortInfo:
+	"""
+	Stores information about a specific port
+	"""
+
+	def __init__(self, port: int, service_name: str, service_transport: str, service_desc: str):
+		self.port = port
+		self.service_name = service_name
+		self.service_transport = service_transport
+		self.service_desc = service_desc
+
 class Dumper:
 	"""
 	Gathers information via APIs and portscanning about a given IP Address, Web Address or Domain
 	"""
 
-	def __init__(self, target: str, logger: Logger):
+	def __init__(self, target: str):
 		"""
 		Creates a new instance
 		"""
 		self.target: str = target
-		self.logger: Logger = logger
+		self.logger: Logger = Logger(enabled=False, color=True)
 
-	def get_ip_info(self) -> None:
+	def attach_logger(self, logger: Logger):
+		"""
+		Attaches a logger to the dumper. This directly outputs to stdout
+		"""
+		self.logger = logger		
+
+	def get_ip_info(self) -> dict:
 		"""
 		Retrieve the information about the IP address from APIs, and print to the terminal
 		"""
@@ -106,23 +130,33 @@ class Dumper:
 			response_json: dict(str, str) = response.json()
 			if response_json["status"] == "success":
 				self.logger.success("Response from {}:".format(base_url))
-				self.print_dict(response.json())
+				return response.json()
 			else:
 				self.logger.error("Unable to fetch information from {} (Reason: {})".format(base_url, response_json["message"]))
+		return dict()
 
-	def get_ssl_info(self) -> None:
+	def get_ssl_info(self) -> dict:
 		"""
 		Retrieve the SSL certificate from the host
 		"""
 		ctx: ssl.SSLContext = ssl.create_default_context()
 		s: ssl.SSLSocket = ctx.wrap_socket(socket.socket(), server_hostname=str(self.target))
-		s.connect((str(self.target), 443))
+		s.settimeout(5)
+		try:
+			s.connect((str(self.target), 443))
+		except socket.gaierror as e:
+			self.logger.error("Unable to fetch information from {} (Reason: {})".format(str(self.target), e))
+			return dict()
+		except socket.timeout as e:
+			self.logger.error("Unable to fetch information from {} (Reason: {})".format(str(self.target), e))
+			return dict()
+
 		cert: ssl.SSLObject = s.getpeercert()
 		s.close()
 		self.logger.success("Certificate: ")
-		self.print_dict(dict(cert))
+		return dict(cert)
 
-	def get_whois_info(self) -> None:
+	def get_whois_info(self) -> str:
 		"""
 		Retrieve the whois information for the target, and print it to the terminal.
 		"""
@@ -134,8 +168,7 @@ class Dumper:
 			s.connect((base_url, 43))
 		except Exception as e:
 			s.close()
-			self.logger.error(e)
-			return
+			return ""
 		
 		host_address: str
 		try:
@@ -143,7 +176,7 @@ class Dumper:
 		except Exception as e:
 			s.close()
 			self.logger.error(e)
-			return
+			return ""
 
 		s.send((host_address + "\r\n").encode())
 		response: bytearray = b""
@@ -155,9 +188,9 @@ class Dumper:
 
 		s.close()
 		self.logger.success("Response from {}:".format(base_url))
-		print(response.decode())
+		return response.decode()
 
-	def __check_port(self, port_no: int) -> None:
+	def __check_port(self, port_no: int, callback) -> None:
 		"""
 		Tests if the given port is open on the target, and prints the relevent table entry
 		"""
@@ -166,64 +199,73 @@ class Dumper:
 		try:
 			con: socket.socket = s.connect((self.target, port_no))
 			try:
-				service_info: list(str) = self.find_service(port_no)
-				port: str = str(port_no).ljust(5)
-				service_name: str = (service_info[0][:25] + "..." if len(service_info[0]) >= 28 else service_info[0]).ljust(28)
-				service_transport: str = service_info[2].ljust(9)
-				service_desc: str = (service_info[3][:45] + "..." if len(service_info[3]) >= 48 else service_info[3]).ljust(48)
-				print("| %s | %s | %s | %s |" % (port, service_name, service_transport, service_desc))
+				service_info: list(str) = find_service(port_no)
+				port: str = str(port_no)
+				service_name: str = service_info[0]
+				service_transport: str = service_info[2]
+				service_desc: str = service_info[3]
+				callback(PortInfo(port, service_name, service_transport, service_desc))
 			except Exception as e:
 				self.logger.error(e)
 			con.close()
 		except Exception as e:
 			pass
 
-	def get_open_ports(self, workers: int = 256) -> None:
+	def get_open_ports(self, workers: int, start: int, end: int, callback) -> None:
 		"""
 		Gets the open ports running on the target and prints them as a table.
 		"""
-		PORT_MIN = 1
-		PORT_MAX = 1024
-		self.logger.info("Portscanning {} for open ports in the range {}-{}".format(self.target, PORT_MIN, PORT_MAX))
-		print("+-------+------------------------------+-----------+%s+" % ("-" * 50))
-		print("| %s | %s | %s | %s |" % ("Port".ljust(5), "Protocol".ljust(28), "Transport".ljust(9), "Description".ljust(48)))
-		print("+-------+------------------------------+-----------+%s+" % ("-" * 50))
+		self.logger.info("Portscanning {} for open ports in the range {}-{}".format(self.target, start, end))
+		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
+		self.logger.no_status("| %s | %s | %s | %s |" % ("Port".ljust(5), "Protocol".ljust(28), "Transport".ljust(9), "Description".ljust(48)))
+		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
 		with ThreadPoolExecutor(max_workers = workers) as executor:
-			for port in range(PORT_MIN, PORT_MAX):
-				executor.submit(self.__check_port, port)
-		print("+-------+------------------------------+-----------+%s+" % ("-" * 50))
+			for port in range(start, end+1):
+				executor.submit(self.__check_port, port, callback)
+
+		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
 		self.logger.success("Portscan finished")
 
-	@staticmethod
-	def print_dict(d: dict) -> None:
-		"""
-		Prints the given dictionary in key-value pairs
-		"""
-		for k, v in d.items():
-			print("%-20s: %s" % (k, v))
 
-	@staticmethod
-	def find_service(port_no: int) -> list:
-		"""
-		Retrieves information about the service running on the given port.
-		This information is read from services.csv
-		"""
+def print_dict(d: dict) -> None:
+	"""
+	Prints the given dictionary in key-value pairs
+	"""
+	for k, v in d.items():
+		print("%-20s: %s" % (k, v))
 
-		if os.path.isfile("services.csv"):
-			f: io.TextIOWrapper = open("services.csv")
-			line: str = f.readline()
-			while line != '':
-				if line.count(",") < 11:
-					line += f.readline()
-				else:
-					if line.split(",")[1] == str(port_no):
-						f.close()
-						return line.split(",")
-					line = f.readline()
-			f.close()
 
-		return ["Unknown"] * 12
+def find_service(port_no: int) -> list:
+	"""
+	Retrieves information about the service running on the given port.
+	This information is read from services.csv
+	"""
 
+	if os.path.isfile("services.csv"):
+		f: io.TextIOWrapper = open("services.csv")
+		line: str = f.readline()
+		while line != '':
+			if line.count(",") < 11:
+				line += f.readline()
+			else:
+				if line.split(",")[1] == str(port_no):
+					f.close()
+					return line.split(",")
+				line = f.readline()
+		f.close()
+
+	return ["Unknown"] * 12
+
+
+def print_port_info(portinfo: PortInfo):
+	"""
+	Prints the information of a port formatted to match the table in Dumper.get_open_ports
+	"""
+	port = str(portinfo.port).ljust(5)
+	service_name = (portinfo.service_name[:25] + "..." if len(portinfo.service_name) >= 28 else portinfo.service_name).ljust(28)
+	service_transport = portinfo.service_transport.ljust(9)
+	service_desc = (portinfo.service_desc[:45] + "..." if len(portinfo.service_desc) >= 48 else portinfo.service_desc).ljust(48)
+	print("    | %s | %s | %s | %s |" % (port, service_name, service_transport, service_desc))
 
 if __name__ == "__main__":
 	
@@ -236,27 +278,25 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--ip-info", help="Fetch information from api-ip.com (contains geographical info)", action="count")
 	parser.add_argument("-s", "--ssl-cert", help="Retrieves the SSL Certificate of the host", action="count")
 	parser.add_argument("-w", "--whois", help="Fetch whois information from arin.net (contains domain ownership info)", action="count")
-	parser.add_argument("-n", "--workers", help="Number of workers for portscanning", type=int)
+	parser.add_argument("-n", "--workers", help="Number of workers for portscanning", type=int, default=256)
+	parser.add_argument("-r", "--range", help="Range of ports to scan formatted as START-END", type=str, default="1-1024")
 	args = parser.parse_args()
 	
 	logger: Logger = Logger(enabled=args.no_logging == None, color=args.no_color == None)
-
-	dumper: Dumper = Dumper(args.host, logger)
+	dumper: Dumper = Dumper(args.host)
+	
+	dumper.attach_logger(logger)
 
 	logger.info("WARNING: I am not liable for any damage (including criminal charges) which may arise from use of this software." \
 		" For more information see the LICENSE file included with this software.\n")
 
 	if args.all != None or args.ip_info != None:
-		dumper.get_ip_info()
+		print_dict(dumper.get_ip_info())
 	if args.all != None or args.ssl_cert != None:
-		dumper.get_ssl_info()
+		print_dict(dumper.get_ssl_info())
 	if args.all != None or args.whois != None:
-		dumper.get_whois_info()
+		print(dumper.get_whois_info())
 	if args.all != None or args.port_scan != None:
-		workers: int = args.workers
-		if workers != None:
-			dumper.get_open_ports(workers=workers)
-		else:
-			dumper.get_open_ports()
-
+		dumper.get_open_ports(args.workers, int(args.range.split("-")[0]), int(args.range.split("-")[1]), print_port_info)
+		
 	logger.info("Report for {} completed".format(args.host))
