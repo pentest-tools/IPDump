@@ -135,20 +135,17 @@ class Dumper:
 				self.logger.error("Unable to fetch information from {} (Reason: {})".format(base_url, response_json["message"]))
 		return dict()
 
-	def get_ssl_info(self) -> dict:
+	def get_ssl_info(self, timeout: int=5) -> dict:
 		"""
 		Retrieve the SSL certificate from the host
 		"""
 		ctx: ssl.SSLContext = ssl.create_default_context()
 		s: ssl.SSLSocket = ctx.wrap_socket(socket.socket(), server_hostname=str(self.target))
-		s.settimeout(5)
+		s.settimeout(timeout)
 		try:
 			s.connect((str(self.target), 443))
-		except socket.gaierror as e:
-			self.logger.error("Unable to fetch information from {} (Reason: {})".format(str(self.target), e))
-			return dict()
-		except socket.timeout as e:
-			self.logger.error("Unable to fetch information from {} (Reason: {})".format(str(self.target), e))
+		except Exception as e:
+			self.logger.error("Unable to connect to {} (Reason: {})".format(str(self.target), e))
 			return dict()
 
 		cert: ssl.SSLObject = s.getpeercert()
@@ -156,7 +153,7 @@ class Dumper:
 		self.logger.success("Certificate: ")
 		return dict(cert)
 
-	def get_whois_info(self) -> str:
+	def get_whois_info(self, timeout: int=5) -> str:
 		"""
 		Retrieve the whois information for the target, and print it to the terminal.
 		"""
@@ -167,6 +164,7 @@ class Dumper:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect((base_url, 43))
 		except Exception as e:
+			self.logger.error("Unable to connect to {} (Reason: {})".format(str(self.target), e))
 			s.close()
 			return ""
 		
@@ -174,8 +172,8 @@ class Dumper:
 		try:
 			host_address = socket.gethostbyname(self.target)
 		except Exception as e:
+			self.logger.error("Unable to connect to {} (Reason: {})".format(str(self.target), e))
 			s.close()
-			self.logger.error(e)
 			return ""
 
 		s.send((host_address + "\r\n").encode())
@@ -190,12 +188,12 @@ class Dumper:
 		self.logger.success("Response from {}:".format(base_url))
 		return response.decode()
 
-	def __check_port(self, port_no: int, callback) -> None:
+	def __check_port(self, port_no: int, callback, timeout: int=5) -> None:
 		"""
 		Tests if the given port is open on the target, and prints the relevent table entry
 		"""
 		s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.settimeout(5)
+		s.settimeout(timeout)
 		try:
 			con: socket.socket = s.connect((self.target, port_no))
 			try:
@@ -211,7 +209,7 @@ class Dumper:
 		except Exception as e:
 			pass
 
-	def get_open_ports(self, workers: int, start: int, end: int, callback) -> None:
+	def get_open_ports(self, callback, workers: int=100, start: int=1, end: int=1000, timeout: int=5) -> None:
 		"""
 		Gets the open ports running on the target and prints them as a table.
 		"""
@@ -219,9 +217,9 @@ class Dumper:
 		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
 		self.logger.no_status("| %s | %s | %s | %s |" % ("Port".ljust(5), "Protocol".ljust(28), "Transport".ljust(9), "Description".ljust(48)))
 		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
-		with ThreadPoolExecutor(max_workers = workers) as executor:
+		with ThreadPoolExecutor(max_workers=workers) as executor:
 			for port in range(start, end+1):
-				executor.submit(self.__check_port, port, callback)
+				executor.submit(self.__check_port, port, callback, timeout)
 
 		self.logger.no_status("+-------+------------------------------+-----------+%s+" % ("-" * 50))
 		self.logger.success("Portscan finished")
@@ -280,6 +278,7 @@ if __name__ == "__main__":
 	parser.add_argument("-w", "--whois", help="Fetch whois information from arin.net (contains domain ownership info)", action="count")
 	parser.add_argument("-n", "--workers", help="Number of workers for portscanning", type=int, default=256)
 	parser.add_argument("-r", "--range", help="Range of ports to scan formatted as START-END", type=str, default="1-1024")
+	parser.add_argument("-t", "--timeout", help="Timeout for SSL and WHOIS fetching and portscanning", type=int, default=5)
 	args = parser.parse_args()
 	
 	logger: Logger = Logger(enabled=args.no_logging == None, color=args.no_color == None)
@@ -293,10 +292,14 @@ if __name__ == "__main__":
 	if args.all != None or args.ip_info != None:
 		print_dict(dumper.get_ip_info())
 	if args.all != None or args.ssl_cert != None:
-		print_dict(dumper.get_ssl_info())
+		print_dict(dumper.get_ssl_info(timeout=args.timeout))
 	if args.all != None or args.whois != None:
-		print(dumper.get_whois_info())
+		print(dumper.get_whois_info(timeout=args.timeout))
 	if args.all != None or args.port_scan != None:
-		dumper.get_open_ports(args.workers, int(args.range.split("-")[0]), int(args.range.split("-")[1]), print_port_info)
+		dumper.get_open_ports(workers=args.workers, 
+			start=int(args.range.split("-")[0]), 
+			end=int(args.range.split("-")[1]), 
+			callback=print_port_info, 
+			timeout=args.timeout)
 		
 	logger.info("Report for {} completed".format(args.host))
