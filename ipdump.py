@@ -118,7 +118,7 @@ class Dumper:
 
 	def get_ip_info(self) -> dict:
 		"""
-		Retrieve the information about the IP address from APIs, and print to the terminal
+		Retrieve the information about the IP address from ip-api.com
 		"""
 		base_url: str = "http://ip-api.com/json/"
 		url_params: str = "?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,currency,isp,org,as,asname,reverse,mobile,proxy,query"
@@ -155,7 +155,7 @@ class Dumper:
 
 	def get_whois_info(self, timeout: int=5) -> str:
 		"""
-		Retrieve the whois information for the target, and print it to the terminal.
+		Retrieve the whois information for the targetfrom whois.arin.net
 		"""
 		base_url: str = "whois.arin.net"
 		self.logger.info("Sending whois query to {}".format(base_url))
@@ -190,7 +190,7 @@ class Dumper:
 
 	def __check_port(self, port_no: int, callback, timeout: int=5) -> None:
 		"""
-		Tests if the given port is open on the target, and prints the relevent table entry
+		Tests if the given port is open on the target, if it is, the callback function is executed with one argument of type PortInfo
 		"""
 		s: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.settimeout(timeout)
@@ -204,7 +204,7 @@ class Dumper:
 				service_desc: str = service_info[3]
 				callback(PortInfo(port, service_name, service_transport, service_desc))
 			except Exception as e:
-				self.logger.error(e)
+				self.logger.error("Unable to scan port {} (Reason: {})".format(str(port_no), e))
 			con.close()
 		except Exception as e:
 			pass

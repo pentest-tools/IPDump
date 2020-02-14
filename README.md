@@ -6,6 +6,7 @@ Current features:
 - SSL Certificate Fetching
 - WHOIS Information
 - Portscanning
+- Import-able
 
 I'm open to new features, and will be adding more.
 
@@ -199,7 +200,7 @@ OrgTechRef:    https://rdap.arin.net/registry/entity/GITHU-ARIN
 
 ### Importing
 
-example.py illustrates how to import ipdump and carry out a simple portscan.
+example.py illustrates how to import IPDump and carry out a simple portscan.
 
 ```
 # Import the Dumper class
