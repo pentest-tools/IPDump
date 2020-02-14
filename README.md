@@ -200,7 +200,7 @@ OrgTechRef:    https://rdap.arin.net/registry/entity/GITHU-ARIN
 
 ### Importing
 
-example.py illustrates how to import IPDump and carry out a simple portscan.
+`example.py` illustrates how to import IPDump and carry out a simple portscan
 
 ```
 # Import the Dumper class
@@ -219,7 +219,7 @@ dumper.get_open_ports(start=1, end=1000, callback=lambda portinfo: print(portinf
 print("")
 ```
 
-This yields the following output:
+yielding the following output:
 ```
 ./example.py 
 Open Ports: 25 465 587 995 993 
